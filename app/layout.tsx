@@ -1,4 +1,4 @@
-import ClickSpark from "@/components/ClickSpark";
+import { ThemeClickSpark } from "@/components/theme-click-spark";
 import { Nav } from "@/components/layout/nav";
 import { PageBackdrop } from "@/components/layout/page-backdrop";
 import { Providers } from "@/components/layout/providers";
@@ -54,20 +54,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} min-h-screen bg-background font-sans text-foreground antialiased`}
       >
         <Providers>
-          <ClickSpark
-            sparkColor={["#ffffff", "#fef9c3", "#fde68a", "#e0f2fe"]}
-            shape="star"
-            sparkCount={5}
-            sparkSize={13}
-            sparkRadius={26}
-            sparkWidth={2}
-            duration={600}
-            easing="ease-out"
-            spread={360}
-            gravity={0}
-            randomness={0.45}
-            glow={0.6}
-          >
+          <ThemeClickSpark>
             <div className="site-frame site-frame--top" aria-hidden="true" />
             <div className="site-frame site-frame--left" aria-hidden="true" />
             <div className="site-frame site-frame--right" aria-hidden="true" />
@@ -81,7 +68,7 @@ export default function RootLayout({
             <PageBackdrop />
             <Nav />
             {children}
-          </ClickSpark>
+          </ThemeClickSpark>
         </Providers>
       </body>
     </html>
