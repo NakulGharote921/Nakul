@@ -20,7 +20,7 @@ type Project = {
   href: string;
 };
 
-const PROJECTS: Project[] = [
+export const PROJECTS: Project[] = [
   {
     id: "doctor-appointment",
     icon: CalendarCheck01Icon,

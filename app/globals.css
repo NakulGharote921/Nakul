@@ -63,6 +63,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Hide scrollbar but keep scrolling enabled */
+html,
+body {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 .skip-to-content {
   position: absolute;
   left: -9999px;
