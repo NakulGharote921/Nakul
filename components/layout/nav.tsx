@@ -26,8 +26,6 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: "Projects", href: "/projects" },
   { label: "About", href: "/about" },
   { label: "Certificate", href: "/certificate" },
-  { label: "My RoadMap", href: "/roadmap" },
-  { label: "My Notes", href: "/notes" },
 ];
 
 function useIsMounted(): boolean {

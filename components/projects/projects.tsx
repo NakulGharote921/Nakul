@@ -1,6 +1,6 @@
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
-import { CalendarCheck01Icon, ChartBarLineIcon } from "@hugeicons/core-free-icons";
+import { CalendarCheck01Icon, ChartBarLineIcon, Globe02Icon } from "@hugeicons/core-free-icons";
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -22,9 +22,22 @@ type Project = {
 
 export const PROJECTS: Project[] = [
   {
+    id: "resoluteai-software",
+    icon: Globe02Icon,
+    iconLabel: "Resolute AI Software",
+    title: "The official website for Resolute AI Software, designed and built end to end.",
+    description:
+      "A fast, responsive company site presenting Resolute AI Software's services and products with a clean, modern layout.",
+    meta: "Company · Website · Web",
+    imageRatio: 1897 / 867,
+    image: "/resoluteai-software-project.png",
+    imageAlt: "Resolute AI Software website homepage",
+    href: "https://resoluteaisoftware.in",
+  },
+  {
     id: "doctor-appointment",
     icon: CalendarCheck01Icon,
-    iconLabel: "Doctor Appointment App",
+    iconLabel: "Techinfo YT Care",
     title: "A modern hospital platform that makes booking and managing appointments simple.",
     description:
       "Patients can discover specialists, book appointments, and access a clear healthcare dashboard in one place.",
@@ -37,7 +50,7 @@ export const PROJECTS: Project[] = [
   {
     id: "expense-tracker",
     icon: ChartBarLineIcon,
-    iconLabel: "Expense Tracker",
+    iconLabel: "Wealth_Flow",
     title: "An AI-powered expense tracker for clearer, more confident money decisions.",
     description:
       "Track income and expenses, understand spending, and manage your financial picture from one elegant dashboard.",
