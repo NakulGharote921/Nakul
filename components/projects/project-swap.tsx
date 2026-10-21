@@ -3,8 +3,10 @@
 import { useTheme } from "next-themes";
 import { useSyncExternalStore, type ReactNode } from "react";
 
-import CardSwap from "@/components/CardSwap";
+import CardSwap, { type CardSwapItem } from "@/components/CardSwap";
 import { PROJECTS } from "@/components/projects/projects";
+
+const LINKEDIN_URL = "https://www.linkedin.com/in/nakul-gharote/";
 
 function useIsMounted(): boolean {
   return useSyncExternalStore(
@@ -14,11 +16,21 @@ function useIsMounted(): boolean {
   );
 }
 
-const items = PROJECTS.map((project) => ({
-  title: project.iconLabel,
-  url: project.href,
-  alt: project.imageAlt,
-}));
+type ProjectCard = CardSwapItem & { href: string };
+
+const CARDS: ProjectCard[] = [
+  ...PROJECTS.map((project) => ({
+    title: project.iconLabel,
+    url: project.href,
+    alt: project.imageAlt,
+    href: project.href,
+  })),
+  {
+    alt: "Nakul Gharote on LinkedIn",
+    image: "/linkedin-showcase.png",
+    href: LINKEDIN_URL,
+  },
+];
 
 export function ProjectSwap(): ReactNode {
   const mounted = useIsMounted();
@@ -30,7 +42,7 @@ export function ProjectSwap(): ReactNode {
       <div className="mx-auto w-full max-w-275 px-6 sm:px-10">
         <div className="h-[520px] overflow-hidden sm:h-[600px]">
           <CardSwap
-            items={items}
+            items={CARDS}
             theme={isDark ? "dark" : "light"}
             delay={4000}
             cardDistance={96}
@@ -48,8 +60,8 @@ export function ProjectSwap(): ReactNode {
             pauseOnHover
             draggable
             onCardClick={(index) => {
-              const project = PROJECTS[index];
-              if (project) window.open(project.href, "_blank", "noopener,noreferrer");
+              const card = CARDS[index];
+              if (card) window.open(card.href, "_blank", "noopener,noreferrer");
             }}
           />
         </div>
