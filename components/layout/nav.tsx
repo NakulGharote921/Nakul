@@ -125,6 +125,12 @@ export function Nav(): ReactNode {
   } | null>(null);
   const [hasMeasured, setHasMeasured] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [lastPathname, setLastPathname] = useState(pathname);
+
+  if (lastPathname !== pathname) {
+    setLastPathname(pathname);
+    setMenuOpen(false);
+  }
 
   const activeIndex = NAV_ITEMS.findIndex((item) =>
     item.href === "/"
@@ -153,10 +159,6 @@ export function Nav(): ReactNode {
     const id = requestAnimationFrame(() => setHasMeasured(true));
     return () => cancelAnimationFrame(id);
   }, [pillRect]);
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (!menuOpen) return;

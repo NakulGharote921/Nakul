@@ -208,7 +208,10 @@ const ClickSpark = forwardRef<ClickSparkHandle, ClickSparkProps>(
       disabled,
     };
     const settingsRef = useRef(settings);
-    settingsRef.current = settings;
+
+    useEffect(() => {
+      settingsRef.current = settings;
+    });
 
     useEffect(() => {
       const root = rootRef.current;

@@ -1,11 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState, createElement, useMemo, useCallback, type ReactNode } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback, type ReactNode } from "react";
 import { gsap } from "gsap";
+
+type TextTypeTag =
+  | "div"
+  | "span"
+  | "p"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "h5"
+  | "h6"
+  | "strong"
+  | "em"
+  | "b"
+  | "i"
+  | "small"
+  | "label";
 
 type TextTypeProps = {
   text: string | string[];
-  as?: any;
+  as?: TextTypeTag;
   typingSpeed?: number;
   initialDelay?: number;
   pauseDuration?: number;
@@ -22,7 +39,6 @@ type TextTypeProps = {
   onSentenceComplete?: (sentence: string, index: number) => void;
   startOnVisible?: boolean;
   reverseMode?: boolean;
-  [key: string]: any;
 };
 
 const TextType = ({
@@ -51,8 +67,11 @@ const TextType = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(!startOnVisible);
-  const cursorRef = useRef(null);
-  const containerRef = useRef(null);
+  const cursorRef = useRef<HTMLSpanElement | null>(null);
+  const containerRef = useRef<HTMLElement | null>(null);
+  const setContainerRef = useCallback((node: HTMLElement | null) => {
+    containerRef.current = node;
+  }, []);
 
   const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
 
@@ -180,24 +199,24 @@ const TextType = ({
     ((textArray[currentTextIndex]?.length ?? 0) > 0 &&
       (currentCharIndex < (textArray[currentTextIndex]?.length ?? 0) || isDeleting));
 
-  return createElement(
-    Component,
-    {
-      ref: containerRef,
-      className: `inline-block whitespace-pre-wrap tracking-tight ${className}`,
-      ...props
-    },
-    <span className="inline" style={{ color: getCurrentTextColor() || 'inherit' }}>
-      {displayedText}
-    </span>,
-    showCursor && (
-      <span
-        ref={cursorRef}
-        className={`ml-1 inline-block opacity-100 ${shouldHideCursor ? 'hidden' : ''} ${cursorClassName}`}
-      >
-        {cursorCharacter}
+  return (
+    <Component
+      ref={setContainerRef}
+      className={`inline-block whitespace-pre-wrap tracking-tight ${className}`}
+      {...props}
+    >
+      <span className="inline" style={{ color: getCurrentTextColor() || 'inherit' }}>
+        {displayedText}
       </span>
-    )
+      {showCursor && (
+        <span
+          ref={cursorRef}
+          className={`ml-1 inline-block opacity-100 ${shouldHideCursor ? 'hidden' : ''} ${cursorClassName}`}
+        >
+          {cursorCharacter}
+        </span>
+      )}
+    </Component>
   );
 };
 

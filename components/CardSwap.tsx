@@ -422,27 +422,29 @@ const CardSwap = forwardRef<CardSwapHandle, CardSwapProps>(
       [cardWidth, cardHeight, cardDistance, verticalDistance, depth, skewAmount, visible, hoverSpread]
     );
 
-    settingsRef.current = {
-      width: cardWidth,
-      height: cardHeight,
-      dx: cardDistance,
-      dy: verticalDistance,
-      dz: Math.max(0, depth),
-      skew: skewAmount,
-      visible,
-      delay,
-      autoplay,
-      pauseOnHover,
-      draggable,
-      speed: clamp(speed, 0.1, 4),
-      bounce: clamp(bounce, 0, 1),
-      parallax: clamp(parallax, 0, 1),
-      hoverSpread: Math.max(0, hoverSpread),
-      dim: clamp(dim, 0, 1),
-      bounds,
-      onCardClick,
-      onChange
-    };
+    useIsomorphicLayoutEffect(() => {
+      settingsRef.current = {
+        width: cardWidth,
+        height: cardHeight,
+        dx: cardDistance,
+        dy: verticalDistance,
+        dz: Math.max(0, depth),
+        skew: skewAmount,
+        visible,
+        delay,
+        autoplay,
+        pauseOnHover,
+        draggable,
+        speed: clamp(speed, 0.1, 4),
+        bounce: clamp(bounce, 0, 1),
+        parallax: clamp(parallax, 0, 1),
+        hoverSpread: Math.max(0, hoverSpread),
+        dim: clamp(dim, 0, 1),
+        bounds,
+        onCardClick,
+        onChange
+      };
+    });
 
     useImperativeHandle(
       ref,

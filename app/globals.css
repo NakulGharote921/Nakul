@@ -100,6 +100,36 @@ body::-webkit-scrollbar {
   outline-offset: 2px;
 }
 
+.focus-ring-cyan:focus-visible {
+  outline: 2px solid #0891b2;
+  outline-offset: 3px;
+}
+
+.dark .focus-ring-cyan:focus-visible {
+  outline: 2px solid #67e8f9;
+}
+
+/* Floating AI assistant orb */
+@keyframes ai-orb-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.ai-orb-float {
+  animation: ai-orb-float 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-orb-float {
+    animation: none;
+  }
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;

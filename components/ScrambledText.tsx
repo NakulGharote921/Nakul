@@ -79,8 +79,11 @@ const ScrambledText: React.FC<ScrambledTextProps> = ({
   const resetRef = useRef<() => void>(() => {});
   const settings = { radius, duration, speed, scrambleChars, scrambleColor, effect, strength, trail, clickBurst };
   const settingsRef = useRef(settings);
-  settingsRef.current = settings;
   const textKey = typeof children === 'string' ? children : undefined;
+
+  useEffect(() => {
+    settingsRef.current = settings;
+  });
 
   const [fontsReady, setFontsReady] = useState(
     () => typeof document === 'undefined' || !document.fonts || document.fonts.status === 'loaded'
