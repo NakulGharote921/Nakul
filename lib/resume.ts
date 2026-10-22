@@ -10,3 +10,6 @@ export const resume = {
     aiTools: ['ChatGPT', 'Claude', 'Gemini', 'Opencode', 'Stitch'],
   },
 };
+
+/** Public, downloadable copy of Nakul's latest resume. */
+export const resumeDownloadPath = "/resume/Nakul_Gharote_Resume.pdf";

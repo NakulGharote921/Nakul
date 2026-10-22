@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "assistantSessions": {
+      "$uid": {
+        "messages": {
+          ".read": "auth != null && auth.uid === $uid",
+          "$messageId": {
+            ".write": "auth != null && auth.uid === $uid && !data.exists()",
+            ".validate": "newData.hasChildren(['role', 'content', 'status', 'requestId', 'createdAt']) && (newData.child('role').val() === 'user' || newData.child('role').val() === 'assistant') && newData.child('content').isString() && newData.child('content').val().length > 0 && newData.child('content').val().length <= 2000 && newData.child('status').val() === 'completed' && newData.child('requestId').isString() && newData.child('createdAt').isNumber()"
+          }
+        }
+      }
+    }
+  }
+}

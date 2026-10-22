@@ -2,7 +2,7 @@
 
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { motion } from "motion/react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/lib/theme";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {

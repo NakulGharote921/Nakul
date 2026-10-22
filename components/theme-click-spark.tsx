@@ -1,7 +1,7 @@
 "use client";
 
 import ClickSpark from "@/components/ClickSpark";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/lib/theme";
 import { useSyncExternalStore, type ReactNode } from "react";
 
 const LIGHT_SPARK_COLORS = ["#000000", "#d4af37"];

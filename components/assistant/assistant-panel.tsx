@@ -1,33 +1,21 @@
 "use client";
 
 import { ArrowUp, RotateCcw } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import Strands from "@/components/Strands";
 import { ThoughtStatus } from "@/components/assistant/thought-status";
+import { ResumeDownloadButton } from "@/components/assistant/resume-download-button";
+import { useRealtimeAssistantChat } from "@/components/assistant/use-realtime-assistant-chat";
 import { FadeIn } from "@/components/ui/motion-primitives";
 import {
   assistantGreeting,
   assistantName,
   assistantOrbColors,
   assistantSuggestions,
-  type AssistantRole,
 } from "@/lib/assistant";
-import { streamAssistantReply } from "@/lib/assistant-client";
 
 type Status = "idle" | "thinking" | "streaming" | "error";
-
-type ChatMessage = {
-  id: string;
-  role: AssistantRole;
-  content: string;
-};
 
 const STATUS_LABEL: Record<Status, string> = {
   idle: "",
@@ -37,15 +25,9 @@ const STATUS_LABEL: Record<Status, string> = {
 };
 
 export function AssistantPanel(): ReactNode {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
-  const [error, setError] = useState<string | null>(null);
+  const { messages, status, error, busy, send, reset } = useRealtimeAssistantChat();
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
-  const idRef = useRef(0);
-
-  const busy = status === "thinking" || status === "streaming";
 
   useEffect(() => {
     const node = scrollRef.current;
@@ -53,91 +35,6 @@ export function AssistantPanel(): ReactNode {
     node.scrollTop = node.scrollHeight;
   }, [messages]);
 
-  useEffect(() => () => abortRef.current?.abort(), []);
-
-  const nextId = useCallback((): string => {
-    idRef.current += 1;
-    return `assistant-message-${idRef.current}`;
-  }, []);
-
-  const send = useCallback(
-    async (raw: string) => {
-      const text = raw.trim();
-      if (!text || busy) return;
-
-      const history: ChatMessage[] = [
-        ...messages,
-        { id: nextId(), role: "user", content: text },
-      ];
-      const replyId = nextId();
-
-      setMessages([
-        ...history,
-        { id: replyId, role: "assistant", content: "" },
-      ]);
-      setInput("");
-      setError(null);
-      setStatus("thinking");
-
-      const controller = new AbortController();
-      abortRef.current = controller;
-
-      try {
-        const full = await streamAssistantReply({
-          messages: history.map(({ role, content }) => ({ role, content })),
-          signal: controller.signal,
-          onDelta: (snapshot) => {
-            setStatus("streaming");
-            setMessages((prev) =>
-              prev.map((message) =>
-                message.id === replyId
-                  ? { ...message, content: snapshot }
-                  : message
-              )
-            );
-          },
-        });
-
-        setStatus("idle");
-        if (!full.trim()) {
-          setMessages((prev) =>
-            prev.map((message) =>
-              message.id === replyId
-                ? {
-                    ...message,
-                    content:
-                      "I could not put that together. Try asking about his experience, stack, projects, or contact details.",
-                  }
-                : message
-            )
-          );
-        }
-      } catch (caught) {
-        if (caught instanceof DOMException && caught.name === "AbortError") {
-          setStatus("idle");
-          return;
-        }
-        setStatus("error");
-        setError(
-          caught instanceof Error
-            ? caught.message
-            : "Something went wrong. Please try again."
-        );
-        setMessages((prev) => prev.filter((message) => message.id !== replyId));
-      } finally {
-        abortRef.current = null;
-      }
-    },
-    [busy, messages, nextId]
-  );
-
-  const reset = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-    setMessages([]);
-    setError(null);
-    setStatus("idle");
-  }, []);
 
   return (
     <FadeIn delay={0.35} className="h-full">
@@ -213,6 +110,7 @@ export function AssistantPanel(): ReactNode {
                   </button>
                 ))}
               </div>
+              <ResumeDownloadButton />
             </div>
           ) : (
             <ul className="flex flex-col gap-3">
@@ -272,6 +170,7 @@ export function AssistantPanel(): ReactNode {
           <form
             onSubmit={(event) => {
               event.preventDefault();
+              setInput("");
               void send(input);
             }}
             className="flex items-center gap-2"

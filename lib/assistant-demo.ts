@@ -1,6 +1,7 @@
 import { CERTIFICATES } from "@/lib/certificates";
 import { siteConfig } from "@/lib/metadata";
 import { PROJECTS } from "@/lib/projects";
+import { resumeDownloadPath } from "@/lib/resume";
 
 const CONTACT = {
   email: "nakulgharote@gmail.com",
@@ -27,6 +28,16 @@ type Rule = {
 };
 
 const RULES: Rule[] = [
+  {
+    test: /\b(resume|cv|curriculum vitae|download.*profile|profile.*download)\b/i,
+    reply: [
+      "You can download Nakul Gharote's latest resume here:",
+      "",
+      `${siteConfig.url}${resumeDownloadPath}`,
+      "",
+      `For an opportunity or interview, you can also reach Nakul at ${CONTACT.email} or ${CONTACT.linkedin}.`,
+    ].join("\n"),
+  },
   {
     test: /\b(certificat|certification|courses?|credential|quizverse|cc[e]?)\b/i,
     reply: [

@@ -6,6 +6,7 @@ export const assistantSuggestions = [
   "What does Nakul do?",
   "Which technologies does he use?",
   "Tell me about his projects.",
+  "Download Nakul Gharote's resume",
   "How can I contact him?",
 ];
 
@@ -39,6 +40,7 @@ const KNOWLEDGE = [
   "AI tooling he works with: ChatGPT, Claude, Gemini, Opencode and Stitch.",
   "Projects: the official ResoluteAI Software website (https://resoluteaisoftware.in), a hospital platform for booking and managing appointments (https://hospital-base-project-wrtl.vercel.app/), and an AI-powered expense tracker (https://expence-tracker-app-gilt.vercel.app/).",
   "Certificates: 17 certificate documents are published on the Certificate page, covering Introduction to Python, Node.js, JavaScript Concepts, CCE, Web Development Essentials, Java Essentials, React Essentials, SQL Deep Dive, Mastering Spring Boot, Unstop Quizverse 2026, Full Stack Development, Web Development with HTML, Java Fundamentals, Containerizing Spring Boot, Refactoring Microservices with AI, and SQL and Relational Databases. The certificates live at /certificate on the portfolio.",
+  "Resume: Nakul's latest resume can be downloaded at https://nakulgharote.github.io/resume/Nakul_Gharote_Resume.pdf. If a recruiter asks for it, provide this direct link and invite them to contact Nakul by email or LinkedIn.",
   "Contact: email nakulgharote@gmail.com, phone +91 8766678066, LinkedIn https://linkedin.com/in/nakul-gharote, GitHub https://github.com/NakulGharote921",
   "Internship availability is not listed anywhere in the portfolio, so do not claim it either way. Point the visitor to his email or LinkedIn instead.",
 ];

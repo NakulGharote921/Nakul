@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "next-themes";
+import { useTheme } from "@/lib/theme";
 import { useSyncExternalStore, type ReactNode } from "react";
 
 import CardSwap, { type CardSwapItem } from "@/components/CardSwap";
@@ -26,6 +26,7 @@ const CARDS: ProjectCard[] = [
     href: project.href,
   })),
   {
+    title: "LinkedIn",
     alt: "Nakul Gharote on LinkedIn",
     image: "/linkedin-showcase.png",
     href: LINKEDIN_URL,

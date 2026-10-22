@@ -32,11 +32,6 @@ function clientKey(request: Request): string {
   return request.headers.get("x-real-ip") ?? "unknown";
 }
 
-/**
- * Best-effort, per-instance rate limit. Keeps a single visitor from burning
- * through the provider key. Not a substitute for a shared store in a
- * multi-instance deployment.
- */
 function checkRateLimit(key: string): {
   allowed: boolean;
   retryAfter: number;
@@ -142,10 +137,6 @@ export async function POST(request: Request): Promise<Response> {
     DEFAULT_TEMPERATURE
   );
 
-  // NVIDIA NIM hosts OpenAI-compatible reasoning models that stream a long
-  // `reasoning_content` preamble before the answer. Thinking can be switched
-  // off, which makes the first token arrive roughly an order of magnitude
-  // sooner, and the reasoning itself is never forwarded to the browser.
   const nvidia = isNvidiaEndpoint(baseUrl);
   const enableThinking = nvidia
     ? readBoolean(process.env.OPENAI_ENABLE_THINKING, false)
@@ -239,11 +230,6 @@ type ProviderChunk = {
   }[];
 };
 
-/**
- * Rewrites the provider stream so the browser only receives answer text.
- * Reasoning models (NVIDIA NIM) stream a long `reasoning_content` preamble
- * that is of no use in the chat window and would leak internal notes.
- */
 function contentOnlyStream(
   source: ReadableStream<Uint8Array>
 ): ReadableStream<Uint8Array> {

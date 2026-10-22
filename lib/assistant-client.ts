@@ -20,10 +20,16 @@ export class AssistantRequestError extends Error {
  */
 export async function streamAssistantReply({
   messages,
+  sessionId,
+  idToken,
+  requestId,
   signal,
   onDelta,
 }: {
   messages: AssistantChatMessage[];
+  sessionId: string;
+  idToken: string;
+  requestId: string;
   signal?: AbortSignal | undefined;
   onDelta?: ((full: string) => void) | undefined;
 }): Promise<string> {
@@ -32,6 +38,9 @@ export async function streamAssistantReply({
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       messages: messages.map(({ role, content }) => ({ role, content })),
+      sessionId,
+      idToken,
+      requestId,
     }),
     signal: signal ?? null,
   });

@@ -7,61 +7,51 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
-import {
-  AiChatPanel,
-  type AiChatMessage,
-  type AiChatStatus,
-} from "@/components/assistant/ai-chat-panel";
+import { AiChatPanel } from "@/components/assistant/ai-chat-panel";
 import { AiOrb } from "@/components/assistant/ai-orb";
+import { useRealtimeAssistantChat } from "@/components/assistant/use-realtime-assistant-chat";
 import { assistantName, floatingAssistantGreeting } from "@/lib/assistant";
-import {
-  AssistantRequestError,
-  streamAssistantReply,
-} from "@/lib/assistant-client";
-import { demoAssistantReply } from "@/lib/assistant-demo";
 import { useReducedMotion } from "@/lib/motion";
 
 const HINT_STORAGE_KEY = "nakul-ai-assistant-hint-dismissed";
-const GREETING_ID = "assistant-greeting";
-const EMPTY_REPLY =
-  "I could not put that together. Try asking about his experience, stack, projects, or contact details.";
 
-function greetingMessage(): AiChatMessage[] {
-  return [{ id: GREETING_ID, role: "assistant", content: floatingAssistantGreeting }];
+function useStoredHintDismissed(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => {
+      try {
+        return window.localStorage.getItem(HINT_STORAGE_KEY) === "1";
+      } catch {
+        return false;
+      }
+    },
+    // This is also used for the first hydration render, matching the server.
+    () => false
+  );
 }
 
 export function AIAssistant(): ReactNode {
   const reducedMotion = useReducedMotion();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const orbRef = useRef<HTMLButtonElement | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
-  const idRef = useRef(0);
   const restoreFocusRef = useRef(false);
 
   const [open, setOpen] = useState(false);
-  const [hintDismissed, setHintDismissed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.localStorage.getItem(HINT_STORAGE_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
-  const [messages, setMessages] = useState<AiChatMessage[]>(greetingMessage);
+  const [hintDismissed, setHintDismissed] = useState(false);
+  const storedHintDismissed = useStoredHintDismissed();
   const [input, setInput] = useState("");
-  const [status, setStatus] = useState<AiChatStatus>("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [demoMode, setDemoMode] = useState(false);
-
-  const busy = status === "thinking" || status === "streaming";
+  const { messages: storedMessages, status, error, busy, send, reset } = useRealtimeAssistantChat();
+  const messages = [
+    { id: "assistant-greeting", role: "assistant" as const, content: floatingAssistantGreeting },
+    ...storedMessages,
+  ];
   // The tooltip belongs to the closed state: it never shows together with
   // the chat panel, and the visitor can dismiss it for good.
-  const tooltipVisible = !open && !hintDismissed;
-
-  useEffect(() => () => abortRef.current?.abort(), []);
+  const tooltipVisible = !open && !hintDismissed && !storedHintDismissed;
 
   // The orb is unmounted while the panel is open, so the focus is handed back
   // to it once it is mounted again.
@@ -70,11 +60,6 @@ export function AIAssistant(): ReactNode {
     restoreFocusRef.current = false;
     orbRef.current?.focus();
   }, [open]);
-
-  const nextId = useCallback((): string => {
-    idRef.current += 1;
-    return `assistant-message-${idRef.current}`;
-  }, []);
 
   const dismissHint = useCallback(() => {
     setHintDismissed(true);
@@ -94,105 +79,6 @@ export function AIAssistant(): ReactNode {
     setOpen(false);
   }, []);
 
-  const reset = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-    setMessages(greetingMessage());
-    setInput("");
-    setError(null);
-    setStatus("idle");
-  }, []);
-
-  const runDemoReply = useCallback(
-    async (replyId: string, question: string): Promise<void> => {
-      const answer = demoAssistantReply(question);
-      const chunks = answer.match(/[\s\S]{1,6}/g) ?? [];
-
-      for (const chunk of chunks) {
-        await new Promise((resolve) => window.setTimeout(resolve, 16));
-        setMessages((prev) =>
-          prev.map((message) =>
-            message.id === replyId
-              ? { ...message, content: message.content + chunk }
-              : message
-          )
-        );
-      }
-    },
-    []
-  );
-
-  const send = useCallback(
-    async (raw: string) => {
-      const text = raw.trim();
-      if (!text || busy) return;
-
-      const history: AiChatMessage[] = [
-        ...messages,
-        { id: nextId(), role: "user", content: text },
-      ];
-      const replyId = nextId();
-
-      setMessages([...history, { id: replyId, role: "assistant", content: "" }]);
-      setInput("");
-      setError(null);
-      setStatus("thinking");
-
-      const controller = new AbortController();
-      abortRef.current = controller;
-
-      try {
-        const full = await streamAssistantReply({
-          messages: history.map(({ role, content }) => ({ role, content })),
-          signal: controller.signal,
-          onDelta: (snapshot) => {
-            setStatus("streaming");
-            setMessages((prev) =>
-              prev.map((message) =>
-                message.id === replyId ? { ...message, content: snapshot } : message
-              )
-            );
-          },
-        });
-
-        setStatus("idle");
-
-        if (!full.trim()) {
-          setMessages((prev) =>
-            prev.map((message) =>
-              message.id === replyId ? { ...message, content: EMPTY_REPLY } : message
-            )
-          );
-        }
-      } catch (caught) {
-        if (caught instanceof DOMException && caught.name === "AbortError") {
-          setStatus("idle");
-          return;
-        }
-
-        if (
-          caught instanceof AssistantRequestError &&
-          caught.code === "missing_api_key"
-        ) {
-          setDemoMode(true);
-          await runDemoReply(replyId, text);
-          setStatus("idle");
-          return;
-        }
-
-        setStatus("error");
-        setError(
-          caught instanceof Error
-            ? caught.message
-            : "Something went wrong. Please try again."
-        );
-        setMessages((prev) => prev.filter((message) => message.id !== replyId));
-      } finally {
-        abortRef.current = null;
-      }
-    },
-    [busy, messages, nextId, runDemoReply]
-  );
 
   useEffect(() => {
     if (!open) return;
@@ -262,10 +148,10 @@ export function AIAssistant(): ReactNode {
               messages={messages}
               status={status}
               error={error}
-              demoMode={demoMode}
+              demoMode={false}
               input={input}
               onInputChange={setInput}
-              onSend={(text) => void send(text)}
+              onSend={(text) => { setInput(""); void send(text); }}
               onReset={reset}
               onClose={() => closePanel(true)}
             />

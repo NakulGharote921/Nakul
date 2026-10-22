@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { ChatMessage } from "@/components/assistant/chat-message";
+import { ResumeDownloadButton } from "@/components/assistant/resume-download-button";
 import { SuggestedQuestions } from "@/components/assistant/suggested-questions";
 import { ThoughtStatus } from "@/components/assistant/thought-status";
 import { assistantName, floatingAssistantSuggestions } from "@/lib/assistant";
@@ -54,6 +55,8 @@ export function AiChatPanel({
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const busy = status === "thinking" || status === "streaming";
+  const showSuggestions =
+    !busy && messages[messages.length - 1]?.role === "assistant";
   const statusText = [STATUS_LABEL[status], demoMode ? "Demo mode" : null]
     .filter(Boolean)
     .join(" · ");
@@ -145,12 +148,15 @@ export function AiChatPanel({
 
         <ThoughtStatus working={busy} active={messages.length > 1} />
 
-        {messages.length <= 1 ? (
-          <SuggestedQuestions
-            questions={floatingAssistantSuggestions}
-            onSelect={onSend}
-            disabled={busy}
-          />
+        {showSuggestions ? (
+          <div className="flex flex-col items-start gap-2.5">
+            <SuggestedQuestions
+              questions={floatingAssistantSuggestions}
+              onSelect={onSend}
+              disabled={busy}
+            />
+            <ResumeDownloadButton />
+          </div>
         ) : null}
 
         {error ? (
