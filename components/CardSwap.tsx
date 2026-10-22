@@ -17,6 +17,7 @@ import {
 } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { BeachIcon, BridgeIcon, CloudIcon, SunsetIcon } from '@hugeicons/core-free-icons';
+import Image from 'next/image';
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
@@ -340,11 +341,13 @@ const ItemCard = ({ item }: { item: CardSwapItem }) => (
               className="pointer-events-none absolute inset-0 block h-full w-full border-0 select-none [-webkit-user-drag:none]"
             />
           ) : (
-            <img
+            <Image
               src={item.image ?? ''}
               alt={item.alt ?? item.title ?? ''}
+              fill
+              sizes="(min-width: 768px) 460px, 92vw"
               draggable={false}
-              className="pointer-events-none absolute inset-0 block h-full w-full object-cover select-none [-webkit-user-drag:none]"
+              className="pointer-events-none object-cover select-none [-webkit-user-drag:none]"
             />
           )}
           <span

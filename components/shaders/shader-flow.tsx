@@ -1,7 +1,7 @@
 "use client";
 
 import { Mesh, Program, Renderer, Transform, Triangle } from "ogl";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 export type ShaderFlowProps = {
   className?: string;
@@ -129,12 +129,33 @@ function readBgColor(el: HTMLElement): [number, number, number] {
 export function ShaderFlow(props: ShaderFlowProps): ReactNode {
   const ref = useRef<HTMLDivElement | null>(null);
   const pr = useRef(props);
+  const [shouldInit, setShouldInit] = useState(false);
 
   useEffect(() => {
     pr.current = props;
   });
 
   useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const gate = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldInit(true);
+          gate.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    gate.observe(el);
+
+    return () => gate.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!shouldInit) return;
+
     const el = ref.current;
     if (!el) return;
 
@@ -199,6 +220,7 @@ export function ShaderFlow(props: ShaderFlowProps): ReactNode {
     let raf = 0;
     let visible = true;
     let onScreen = true;
+    let lastFrame = 0;
     const t0 = performance.now();
 
     const onVisibility = (): void => {
@@ -241,8 +263,10 @@ export function ShaderFlow(props: ShaderFlowProps): ReactNode {
     };
 
     const tick = (): void => {
-      if (visible && onScreen) {
-        p.uniforms.uT.value = (performance.now() - t0) / 1000;
+      const now = performance.now();
+      if (visible && onScreen && now - lastFrame >= 33) {
+        lastFrame = now;
+        p.uniforms.uT.value = (now - t0) / 1000;
         sync();
         r.render({ scene });
       }
@@ -259,7 +283,7 @@ export function ShaderFlow(props: ShaderFlowProps): ReactNode {
       if (gl.canvas.parentElement === el) el.removeChild(gl.canvas);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, []);
+  }, [shouldInit]);
 
   return (
     <div

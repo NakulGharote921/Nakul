@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
+import NextImage from "next/image";
 import { Renderer, Program, Mesh, Triangle, Transform, Texture } from "ogl";
 
 export type PortraitMorphProps = {
@@ -114,6 +115,18 @@ void main() {
 }
 `;
 
+function computeEdgeDirection(x: number, y: number): [number, number] {
+  const dxLeft = x;
+  const dxRight = 1 - x;
+  const dyBottom = y;
+  const dyTop = 1 - y;
+  const minDist = Math.min(dxLeft, dxRight, dyBottom, dyTop);
+  if (minDist === dxLeft) return [1, 0];
+  if (minDist === dxRight) return [-1, 0];
+  if (minDist === dyBottom) return [0, 1];
+  return [0, -1];
+}
+
 export function PortraitMorph({
   srcA,
   srcB,
@@ -121,7 +134,8 @@ export function PortraitMorph({
   className,
 }: PortraitMorphProps): ReactNode {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [ready, setReady] = useState(false);
+  const fallbackRef = useRef<HTMLImageElement | null>(null);
+  const [active, setActive] = useState(false);
   const hoverRef = useRef(false);
   const progressRef = useRef(0);
   const originRef = useRef<[number, number]>([0.5, 0.5]);
@@ -129,6 +143,8 @@ export function PortraitMorph({
   const lastPointerRef = useRef<{ x: number; y: number; t: number } | null>(null);
 
   useEffect(() => {
+    if (!active) return;
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -139,9 +155,13 @@ export function PortraitMorph({
     });
     const gl = renderer.gl;
     const canvas = gl.canvas as HTMLCanvasElement;
+    canvas.style.position = "absolute";
+    canvas.style.inset = "0";
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     canvas.style.display = "block";
+    canvas.style.opacity = "0";
+    canvas.style.transition = "opacity 180ms ease";
     container.appendChild(canvas);
 
     const scene = new Transform();
@@ -151,18 +171,31 @@ export function PortraitMorph({
 
     const imageSize: [number, number] = [1, 1];
 
-    const loadImage = (src: string, target: Texture): Promise<void> =>
+    const loadImage = (
+      src: string,
+      target: Texture,
+      element?: HTMLImageElement | null
+    ): Promise<void> =>
       new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => {
+        const img = element ?? new Image();
+        if (!element) img.crossOrigin = "anonymous";
+
+        const onLoad = () => {
           target.image = img;
           imageSize[0] = img.naturalWidth;
           imageSize[1] = img.naturalHeight;
           resolve();
         };
-        img.onerror = reject;
-        img.src = src;
+        const onError = () => reject(new Error(`Failed to load ${src}`));
+
+        if (img.complete && img.naturalWidth > 0) {
+          onLoad();
+          return;
+        }
+
+        img.addEventListener("load", onLoad, { once: true });
+        img.addEventListener("error", onError, { once: true });
+        if (!element) img.src = src;
       });
 
     const geometry = new Triangle(gl);
@@ -223,30 +256,34 @@ export function PortraitMorph({
       program.uniforms.uImageSize.value = imageSize;
 
       renderer.render({ scene });
+
+      // Only keep drawing while the morph is active. The static portrait does
+      // not need a permanent 60fps render loop.
+      if (hoverRef.current || progressRef.current > 0.001) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        raf = 0;
+      }
+    };
+
+    const startTicking = () => {
+      if (raf) return;
+      last = performance.now();
       raf = requestAnimationFrame(tick);
     };
 
-    Promise.all([loadImage(srcA, texA), loadImage(srcB, texB)])
+    Promise.all([
+      loadImage(srcA, texA, fallbackRef.current),
+      loadImage(srcB, texB),
+    ])
       .then(() => {
-        setReady(true);
+        canvas.style.opacity = "1";
         last = performance.now();
         tick();
       })
       .catch(() => {
-        setReady(false);
+        canvas.style.opacity = "0";
       });
-
-    const computeEdgeDirection = (x: number, y: number): [number, number] => {
-      const dxLeft = x;
-      const dxRight = 1 - x;
-      const dyBottom = y;
-      const dyTop = 1 - y;
-      const minDist = Math.min(dxLeft, dxRight, dyBottom, dyTop);
-      if (minDist === dxLeft) return [1, 0];
-      if (minDist === dxRight) return [-1, 0];
-      if (minDist === dyBottom) return [0, 1];
-      return [0, -1];
-    };
 
     const onPointerEnter = (e: PointerEvent) => {
       const rect = container.getBoundingClientRect();
@@ -256,6 +293,7 @@ export function PortraitMorph({
       directionRef.current = computeEdgeDirection(x, y);
       lastPointerRef.current = { x, y, t: performance.now() };
       hoverRef.current = true;
+      startTicking();
     };
     const onPointerLeave = (e: PointerEvent) => {
       const rect = container.getBoundingClientRect();
@@ -299,24 +337,48 @@ export function PortraitMorph({
       if (ext) ext.loseContext();
       if (canvas.parentNode === container) container.removeChild(canvas);
     };
-  }, [srcA, srcB]);
+  }, [active, srcA, srcB]);
+
+  const onPointerEnter = (event: ReactPointerEvent<HTMLDivElement>): void => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = 1 - (event.clientY - rect.top) / rect.height;
+
+    originRef.current = [x, y];
+    directionRef.current = computeEdgeDirection(x, y);
+    lastPointerRef.current = { x, y, t: performance.now() };
+    hoverRef.current = true;
+    setActive(true);
+  };
+
+  const onPointerDown = (): void => {
+    hoverRef.current = true;
+    setActive(true);
+  };
 
   return (
     <div
       ref={containerRef}
-      role="img"
-      aria-label={alt}
       className={className}
+      onPointerEnter={onPointerEnter}
+      onPointerDown={onPointerDown}
       style={{ position: "relative", width: "100%", height: "100%", filter: "grayscale(100%)" }}
     >
-      {!ready ? (
-        <img
-          src={srcA}
-          alt={alt}
-          draggable={false}
-          className="absolute inset-0 h-full w-full select-none object-cover"
-        />
-      ) : null}
+      <NextImage
+        ref={fallbackRef}
+        src={srcA}
+        alt={alt}
+        fill
+        preload
+        loading="eager"
+        fetchPriority="high"
+        sizes="(min-width: 768px) 420px, (min-width: 640px) calc(100vw - 80px), calc(100vw - 48px)"
+        draggable={false}
+        className="select-none object-cover"
+      />
     </div>
   );
 }

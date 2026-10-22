@@ -109,6 +109,31 @@ body::-webkit-scrollbar {
   outline: 2px solid #67e8f9;
 }
 
+/* Typing cursor */
+@keyframes type-cursor-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.type-cursor {
+  animation: type-cursor-blink 1s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .type-cursor {
+    animation: none;
+  }
+}
+
 /* Floating AI assistant orb */
 @keyframes ai-orb-float {
   0%,

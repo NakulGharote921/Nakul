@@ -21,7 +21,7 @@ type ProjectCard = CardSwapItem & { href: string };
 const CARDS: ProjectCard[] = [
   ...PROJECTS.map((project) => ({
     title: project.iconLabel,
-    url: project.href,
+    image: project.image,
     alt: project.imageAlt,
     href: project.href,
   })),

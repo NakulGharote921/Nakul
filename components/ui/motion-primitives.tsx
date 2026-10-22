@@ -10,15 +10,17 @@ export function FadeIn({
   delay = 0,
   duration = 0.8,
   className,
+  immediate = false,
 }: {
   children: ReactNode;
   delay?: number;
   duration?: number;
   className?: string;
+  immediate?: boolean;
 }): ReactNode {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={immediate ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration, delay, ease: EASE }}
       className={className}
@@ -33,15 +35,19 @@ export function ScaleUnblur({
   delay = 0,
   duration = 1,
   className,
+  immediate = false,
 }: {
   children: ReactNode;
   delay?: number;
   duration?: number;
   className?: string;
+  immediate?: boolean;
 }): ReactNode {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.7, filter: "blur(20px)" }}
+      initial={
+        immediate ? false : { opacity: 0, scale: 0.7, filter: "blur(20px)" }
+      }
       animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
       transition={{ duration, delay, ease: EASE }}
       style={{ transformOrigin: "center" }}

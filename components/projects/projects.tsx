@@ -38,7 +38,12 @@ export function Projects({
 
         <div className="columns-1 gap-6 md:columns-2 md:gap-7">
           {items.map((project, index) => (
-            <ProjectCard key={project.id} project={project} index={index} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              index={index}
+              priority={!withHeadline && index < 2}
+            />
           ))}
         </div>
 
@@ -64,9 +69,11 @@ export function Projects({
 function ProjectCard({
   project,
   index,
+  priority,
 }: {
   project: Project;
   index: number;
+  priority: boolean;
 }): ReactNode {
   return (
     <FadeIn
@@ -99,7 +106,7 @@ function ProjectCard({
               fill
               sizes="(min-width: 1024px) 540px, (min-width: 768px) 45vw, 100vw"
               className="object-cover"
-              priority={index < 2}
+              preload={priority}
             />
           </div>
         </div>

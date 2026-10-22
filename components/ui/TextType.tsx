@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo, useCallback, type ReactNode } from "react";
-import { gsap } from "gsap";
 
 type TextTypeTag =
   | "div"
@@ -38,6 +37,7 @@ type TextTypeProps = {
   variableSpeed?: { min: number; max: number };
   onSentenceComplete?: (sentence: string, index: number) => void;
   startOnVisible?: boolean;
+  startOnInteraction?: boolean;
   reverseMode?: boolean;
 };
 
@@ -59,21 +59,28 @@ const TextType = ({
   variableSpeed,
   onSentenceComplete,
   startOnVisible = false,
+  startOnInteraction = false,
   reverseMode = false,
   ...props
 }: TextTypeProps): ReactNode => {
-  const [displayedText, setDisplayedText] = useState('');
-  const [currentCharIndex, setCurrentCharIndex] = useState(0);
+  const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
+  const initialText = useMemo(() => {
+    const first = textArray[0] ?? "";
+    return reverseMode ? first.split("").reverse().join("") : first;
+  }, [reverseMode, textArray]);
+
+  // Start with the first phrase rendered so the heading is painted before
+  // hydration. The typing loop still runs after the initial pause.
+  const [displayedText, setDisplayedText] = useState(initialText);
+  const [currentCharIndex, setCurrentCharIndex] = useState(initialText.length);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(!startOnVisible);
-  const cursorRef = useRef<HTMLSpanElement | null>(null);
+  const [hasInteracted, setHasInteracted] = useState(!startOnInteraction);
   const containerRef = useRef<HTMLElement | null>(null);
   const setContainerRef = useCallback((node: HTMLElement | null) => {
     containerRef.current = node;
   }, []);
-
-  const textArray = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
 
   const getRandomSpeed = useCallback(() => {
     if (!variableSpeed) return typingSpeed;
@@ -105,25 +112,31 @@ const TextType = ({
   }, [startOnVisible]);
 
   useEffect(() => {
-    if (showCursor && cursorRef.current) {
-      gsap.set(cursorRef.current, { opacity: 1 });
-      const tween = gsap.to(cursorRef.current, {
-        opacity: 0,
-        duration: cursorBlinkDuration,
-        repeat: -1,
-        yoyo: true,
-        ease: "power2.inOut",
-      });
+    if (!startOnInteraction || hasInteracted) return;
 
-      return () => {
-        tween.kill();
-      };
+    const start = (): void => setHasInteracted(true);
+    const events: Array<keyof WindowEventMap> = [
+      "pointerdown",
+      "pointermove",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "wheel",
+    ];
+
+    for (const event of events) {
+      window.addEventListener(event, start, { once: true, passive: true });
     }
-    return;
-  }, [showCursor, cursorBlinkDuration]);
+
+    return () => {
+      for (const event of events) {
+        window.removeEventListener(event, start);
+      }
+    };
+  }, [hasInteracted, startOnInteraction]);
 
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible || !hasInteracted) return;
 
     let timeout: NodeJS.Timeout;
 
@@ -189,6 +202,7 @@ const TextType = ({
     loop,
     initialDelay,
     isVisible,
+    hasInteracted,
     reverseMode,
     variableSpeed,
     onSentenceComplete
@@ -210,8 +224,9 @@ const TextType = ({
       </span>
       {showCursor && (
         <span
-          ref={cursorRef}
-          className={`ml-1 inline-block opacity-100 ${shouldHideCursor ? 'hidden' : ''} ${cursorClassName}`}
+          aria-hidden="true"
+          className={`type-cursor ml-1 inline-block ${shouldHideCursor ? 'hidden' : ''} ${cursorClassName}`}
+          style={{ animationDuration: `${cursorBlinkDuration * 2}s` }}
         >
           {cursorCharacter}
         </span>

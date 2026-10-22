@@ -34,13 +34,19 @@ function useStoredHintDismissed(): boolean {
   );
 }
 
-export function AIAssistant(): ReactNode {
+type AIAssistantProps = {
+  initialOpen?: boolean;
+};
+
+export function AIAssistant({
+  initialOpen = false,
+}: AIAssistantProps = {}): ReactNode {
   const reducedMotion = useReducedMotion();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const orbRef = useRef<HTMLButtonElement | null>(null);
   const restoreFocusRef = useRef(false);
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const [hintDismissed, setHintDismissed] = useState(false);
   const storedHintDismissed = useStoredHintDismissed();
   const [input, setInput] = useState("");

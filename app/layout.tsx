@@ -1,5 +1,5 @@
 import { ThemeClickSpark } from "@/components/theme-click-spark";
-import { AIAssistant } from "@/components/assistant/ai-assistant";
+import { LazyAIAssistant } from "@/components/assistant/lazy-ai-assistant";
 import { Nav } from "@/components/layout/nav";
 import { PageBackdrop } from "@/components/layout/page-backdrop";
 import { Providers } from "@/components/layout/providers";
@@ -69,7 +69,7 @@ export default function RootLayout({
             <PageBackdrop />
             <Nav />
             {children}
-            <AIAssistant />
+            <LazyAIAssistant />
           </ThemeClickSpark>
         </Providers>
       </body>
