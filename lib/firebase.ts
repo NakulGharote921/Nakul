@@ -1,7 +1,14 @@
 "use client";
 
-import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
+import {
+  browserLocalPersistence,
+  browserSessionPersistence,
+  getAuth,
+  indexedDBLocalPersistence,
+  initializeAuth,
+  type Auth,
+} from "firebase/auth";
 import { getDatabase } from "firebase/database";
 
 const config = {
@@ -26,5 +33,25 @@ const app = firebaseConfigured
     : initializeApp(config)
   : null;
 
-export const firebaseAuth = app ? getAuth(app) : null;
+function createAuth(app: FirebaseApp): Auth {
+  try {
+    // This app only uses anonymous auth. `getAuth` installs a proactive
+    // popup/redirect resolver, which loads Google's gapi iframe and its
+    // third-party cookies even though no Google sign-in flow exists here.
+    return initializeAuth(app, {
+      persistence: [
+        indexedDBLocalPersistence,
+        browserLocalPersistence,
+        browserSessionPersistence,
+      ],
+    });
+  } catch (error) {
+    if ((error as { code?: string }).code === "auth/already-initialized") {
+      return getAuth(app);
+    }
+    throw error;
+  }
+}
+
+export const firebaseAuth = app ? createAuth(app) : null;
 export const realtimeDatabase = app ? getDatabase(app) : null;
